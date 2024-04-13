@@ -1,0 +1,61 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String           @id @default(uuid())
+  name            String
+  age             Int?
+  email           String?
+  isAdmin         Boolean?
+  preferences     Json?
+  role            Role             @default(Basic)
+  writtenPosts    Post[]           @relation("writtenPosts")
+  favouritePosts  Post[]           @relation("favouritePosts")
+  userPreferences userPreferences?
+
+  @@unique([name, age])
+  @@index([email])
+}
+
+model userPreferences {
+  id           String  @id @default(uuid())
+  emailUpdates Boolean
+  user         User    @relation(fields: [userId], references: [id])
+  userId       String  @unique
+}
+
+model Post {
+  id             String     @id @default(uuid())
+  title          String
+  averageRating  Float
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  author         User       @relation("writtenPosts", fields: [authorId], references: [id])
+  authorId       String
+  favouritedBy   User?      @relation("favouritePosts", fields: [favouritedById], references: [id])
+  favouritedById String?
+  categories     Category[]
+}
+
+model Category {
+  id    String @id @default(uuid())
+  name  String @unique
+  posts Post[]
+}
+
+enum Role {
+  Basic
+  ADVANCED
+}
